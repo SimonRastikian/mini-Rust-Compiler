@@ -4,7 +4,7 @@ FLAGS=-annot -g
 
 
 
-prustc: $(CMO)
+mini_rustc: $(CMO)
 	# ocamlc $(FLAGS) -o $@ nums.cma $(CMO)
 	ocamlc $(FLAGS) -o $@ $(CMO)
 
