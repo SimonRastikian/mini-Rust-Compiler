@@ -1,0 +1,8 @@
+*.cmo
+*.annot
+*.cmi
+parser.mli
+parser.output
+parser.automaton
+parser.conflicts
+out
