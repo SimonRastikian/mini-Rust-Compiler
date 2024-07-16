@@ -6,7 +6,7 @@ make
 To Run the code use the command
 ``` bash
 chmod -x run-tests
-./run-tests <option> ./prustc <option>
+./run-tests <option> ./mini_rustc <option>
 ```
 
 For example to run all the test cases
