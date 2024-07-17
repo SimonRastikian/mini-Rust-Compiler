@@ -10,7 +10,7 @@
 %token LEN VEC EOF PRINT
 %token ARROW EQUAL BLT BGT
 %token PLUS MINUS STAR DIV MOD
-%token AND OR MUT BORR NOT	
+%token AND OR MUT BORR NOT
 %token LP RP LSQ RSQ COMMA POINT COLON SEMICOLON LB RB
 
 /* ordre de priorite */
@@ -21,22 +21,22 @@
 %left PLUS MINUS
 %left STAR DIV MOD
 %nonassoc NOT unary_minus unary_star BORR MUT
-%nonassoc LSQ 
+%nonassoc LSQ
 %nonassoc POINT
 
 
 /* entree de la grammaire et type de valeurs renvoyees */
 %start file
-%type <Ast.fichier> file
+%type <Ast.file> file
 
 %%
 file:
-| d = list(decl) EOF 
+| d = list(decl) EOF
 	{d}
 ;
 
 decl:
-| FN f = decl_fun 
+| FN f = decl_fun
 	{Dfun f}
 | STRUCT d = decl_struct
 	{Dstruct d}
@@ -71,18 +71,18 @@ arg:
 ;
 
 typ:
-| t = my_type 
+| t = my_type
 	{ {my_type = t;
 	  localisation = $startpos,$endpos} }
 ;
 
 my_type:
-| i=ident 
+| i=ident
 	{ Tident i }
 | i=ident BLT t=typ BGT
 	{ Tidtyp (i,t) }
 | BORR t = typ
-	{ Tref t } 
+	{ Tref t }
 | BORR MUT t = typ
 	{ Trefmut t }
 ;
@@ -90,12 +90,12 @@ my_type:
 blocbody :
 | e=option(expr)
 	{ ([],e) }
-| s=stmt b=blocbody   
+| s=stmt b=blocbody
 	{ (s::(fst b),snd b) }
 ;
 
 bloc:
-| LB body=blocbody RB 
+| LB body=blocbody RB
 	{body}
 ;
 
@@ -113,13 +113,13 @@ stmt:
 	{ Swhile(e,b) }
 | RETURN e = option(expr) SEMICOLON
 	{ Sret e }
-| IF e = ifcmp 
+| IF e = ifcmp
 	{ Sif e }
 ;
 
 expression:
-| c = CST 
-	{ Ecst c } 
+| c = CST
+	{ Ecst c }
 | i = ident
 	{ Eident i }
 | MINUS e1 = expr %prec unary_minus
@@ -129,8 +129,8 @@ expression:
 | u=unary e1=expr
 	{ Eunop (u,e1)}
 | e1 = expr o = binop  e2 = expr
-	{ Ebinop(o,e1,e2) } 
-| e=expr POINT i=ident 
+	{ Ebinop(o,e1,e2) }
+| e=expr POINT i=ident
 	{Estruct (e,i)}
 | e=expr POINT LEN LP RP
 	{Elen e}
@@ -149,7 +149,7 @@ expression:
 ;
 
 expr:
-| d=expression 
+| d=expression
 	{ {expression = d;
 	  localisation = $startpos,$endpos} }
 ;
@@ -190,4 +190,4 @@ ident:
  | id = IDENT {id}
  | PRINT {"print"}
  | VEC {"vec"}
-; 
+;

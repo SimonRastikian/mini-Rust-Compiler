@@ -7,7 +7,7 @@
 
 	exception Lexing_error of string
 
-	(* mots-clés *)
+	(* key words reserved by Rust language *)
 	let kwd =
 	[ "fn", FN;
 	  "if", IF;
@@ -20,20 +20,22 @@
 	  "false",CST (Cbool false);
 	  "true", CST (Cbool true); ]
 
+	(* create a buffer of size 1024 characters *)
 	let string_buffer = Buffer.create 1024
 
+	(* iterate over the key words and put the string token in a hash table *)
 	let id_or_kwd =
-		let h =Hashtbl.create 17 in
+		let h = Hashtbl.create 17 in
 		List.iter (fun (s,t) -> Hashtbl.add h s t) kwd;
 		fun s -> try Hashtbl.find h s with Not_found -> IDENT s
 }
 
-let space = [' ' '\t' ] 						(* blanc *)
 let digit = ['0'-'9']							(* chiffre *)
+let integer = digit+							(* entier *)
 let letter = ['a'-'z' 'A'-'Z']					(* lettre *)
 let ident = letter (letter|digit|'_')*			(* variable *)
-let integer = digit+							(* entier *)
 let cmnt = "//" [^ '\n']*						(* commentaire *)
+let space = [' ' '\t' ] 						(* blanc *)
 
 rule token = parse
 	| "vec"		{VEC}

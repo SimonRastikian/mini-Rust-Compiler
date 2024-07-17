@@ -75,5 +75,5 @@ type decl_struct = {                        (* struct x {y:type} *)
   localisation : Lexing.position*Lexing.position }
 
 type decl = Dfun of decl_fun | Dstruct of decl_struct
-type fichier = decl list
+type file = decl list
 
