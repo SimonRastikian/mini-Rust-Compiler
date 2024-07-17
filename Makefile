@@ -26,10 +26,10 @@ mini_rustc: $(CMO)
 	menhir  -v $<
 
 clean:
-	rm -f *.cm[io] *.o *.annot *~ prustc $(GENERATED)
+	rm -f *.cm[io] *.o *.annot $(GENERATED)
 	rm -f parser.output parser.automaton parser.conflicts
 	rm -f .depend
-	rm -f lexer.ml out
+	rm -f lexer.ml parser.ml mini_rustc
 
 parser.ml: ast.cmi
 

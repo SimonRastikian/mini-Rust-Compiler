@@ -1,8 +1,11 @@
 *.cmo
 *.annot
 *.cmi
+lexer.ml
+parser.ml
 parser.mli
 parser.output
 parser.automaton
 parser.conflicts
-out
+mini_rustc
+.depend
