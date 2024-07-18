@@ -3,7 +3,6 @@
 
 open Format
 open Lexing
-open Parser
 
 let usage = "usage: mini-rust [options] file.rs"
 
@@ -42,7 +41,7 @@ let () =
     if !parse_only then exit 0;
     let tf = Typer.type_file p in
     if !type_only then exit 0;
-    if !no_asm then exit 0;  
+    if !no_asm then exit 0;
     let out_name = (Filename.chop_suffix filename ".rs") ^ ".s" in
     Compile.compile_program tf out_name
   with
