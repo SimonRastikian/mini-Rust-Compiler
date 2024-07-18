@@ -36,18 +36,18 @@ and texpression =
    | Efun of Ast.ident * texpr list
    | Evect of vector
    | Eprint of string
-   | Ebloc of tbloc
+   | Eblock of tblock
    | Eletv of bool * Ast.ident * texpr
    | Elets of bool * Ast.ident * Ast.ident * texpr Decls.t
-   | Ewhile of texpr * tbloc
+   | Ewhile of texpr * tblock
    | Eret of texpr
    | Eif of tifcmp
 
-and tbloc = texpr list
+and tblock = texpr list
 and tifcmp = {
    cond : texpr;
-   then_bloc : tbloc;
-   else_bloc : tbloc;
+   then_block : tblock;
+   else_block : tblock;
 }
 
 and vector = { arr : texpr array ;
@@ -79,7 +79,7 @@ type env = {
 type fun_def = {
    decl : fun_decl;
    args : Ast.ident list;
-   body : tbloc
+   body : tblock
 }
 
 type fun_defs = fun_def Decls.t

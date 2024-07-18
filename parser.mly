@@ -25,16 +25,18 @@
 %nonassoc POINT
 
 
-/* entree de la grammaire et type de valeurs renvoyees */
+/* Start the parser at the file constructor */
 %start file
 %type <Ast.file> file
 
 %%
+// a file is a list of declarations that ends with EOF
 file:
-| d = list(decl) EOF
+	d = list(decl) EOF
 	{d}
 ;
 
+// a declaration is either a function or a structure
 decl:
 | FN f = decl_fun
 	{Dfun f}
@@ -42,9 +44,11 @@ decl:
 	{Dstruct d}
 ;
 
+// a structure is an identifier, `{`, body, `}`
 decl_struct:
 	name = ident
 	LB
+	// the body is a sequence of identifiers:value ending with comma
 	body = separated_list(COMMA,separated_pair (ident,COLON,typ))
 	RB
 	{ { name = name;
@@ -52,68 +56,76 @@ decl_struct:
 	    localisation = $startpos,$endpos} }
 ;
 
+// a function is a name `(` arguments `)` -> type {...}
 decl_fun:
 	name = ident
 	LP
+	// arguments are comma separated
 	formals = separated_list(COMMA,arg)
 	RP
-	t= option (preceded(ARROW,typ))
-	body = bloc
+	// declaring the function type in rust is optional
+	t = option(preceded(ARROW,typ))
+	body = block
 	{ { name = name;
 		formals = (formals,t);
 		body = body;
 		localisation = $startpos,$endpos } }
 ;
 
+// an argument is mut identifier: type
 arg:
-| mut = boption(MUT) i = ident COLON t=typ
+	// the mut is optional
+	mut = boption(MUT) i = ident COLON t=typ
 	{ (mut,i),t }
 ;
 
+// a type could have several syntax
 typ:
-| t = my_type
+	t = my_type
 	{ {my_type = t;
 	  localisation = $startpos,$endpos} }
 ;
 
 my_type:
-| i=ident
+| i=ident									// identifier
 	{ Tident i }
-| i=ident BLT t=typ BGT
+| i=ident BLT t=typ BGT		// <identifier>
 	{ Tidtyp (i,t) }
-| BORR t = typ
+| BORR t = typ						// &typ
 	{ Tref t }
-| BORR MUT t = typ
+| BORR MUT t = typ				// &mut typ
 	{ Trefmut t }
 ;
 
-blocbody :
-| e=option(expr)
+// a block body ...
+blockbody :
+| e=option(expr)					// empty or contains expressions
 	{ ([],e) }
-| s=stmt b=blocbody
+| s=stmt b=blockbody			// statement ...
 	{ (s::(fst b),snd b) }
 ;
 
-bloc:
-| LB body=blocbody RB
+// a block {...}
+block:
+| LB body=blockbody RB
 	{body}
 ;
 
 stmt:
-| SEMICOLON
+| SEMICOLON							// ;
 	{ Snone }
-| e = expr SEMICOLON
+| e = expr SEMICOLON		// exp;
 	{ Sexpr e }
-| LET boolean = boption(MUT) name = ident EQUAL e = expr SEMICOLON
+| LET boolean = boption(MUT) name = ident EQUAL e = expr SEMICOLON // let mut identifier = exp;
 	{ Sletv((boolean,name),e) }
 | LET boolean = boption(MUT) name = ident EQUAL i = ident LB
   l = separated_list(COMMA,separated_pair(ident, COLON, expr)) RB SEMICOLON
-  	{ Slets((boolean,name),i,l) }
-| WHILE e = expr b = bloc
+  	{ Slets((boolean,name),i,l) }			// let mut identifier = identifier {identifier:exp, ...};
+| WHILE e = expr b = block						// while e {...}
 	{ Swhile(e,b) }
-| RETURN e = option(expr) SEMICOLON
+| RETURN e = option(expr) SEMICOLON		// return e;
 	{ Sret e }
-| IF e = ifcmp
+| IF e = ifcmp				// if
 	{ Sif e }
 ;
 
@@ -122,30 +134,30 @@ expression:
 	{ Ecst c }
 | i = ident
 	{ Eident i }
-| MINUS e1 = expr %prec unary_minus
-    { Eunop (Uneg,e1) }
-| STAR e1 = expr %prec unary_star
-	{ Eunop (Uderef,e1)}
+| MINUS e1 = expr %prec unary_minus // -e
+  { Eunop(Uneg,e1) }
+| STAR e1 = expr %prec unary_star		// *e
+	{ Eunop(Uderef,e1) }
 | u=unary e1=expr
-	{ Eunop (u,e1)}
+	{ Eunop(u,e1) }
 | e1 = expr o = binop  e2 = expr
 	{ Ebinop(o,e1,e2) }
 | e=expr POINT i=ident
-	{Estruct (e,i)}
+	{ Estruct(e,i) }
 | e=expr POINT LEN LP RP
-	{Elen e}
+	{ Elen e }
 | e1=expr LSQ e2=expr RSQ
-	{Eget(e1,e2)}
+	{ Eget(e1,e2) }
 | i=ident LP le=separated_list(COMMA,expr) RP
-	{Efun(i,le)}
+	{ Efun(i,le) }
 | VEC NOT LSQ le=separated_list(COMMA,expr) RSQ
-	{Evect le}
+	{ Evect le }
 | PRINT NOT LP s=STRING RP
-	{Eprint s}
-| b=bloc
-	{Ebloc b}
+	{ Eprint s }
+| b=block
+	{ Eblock b }
 | LP e=expr RP
-	{Eparenthese e}
+	{ Eparenthese e }
 ;
 
 expr:
@@ -155,13 +167,13 @@ expr:
 ;
 
 ifcmp:
-| e=expr b=bloc t=option(preceded(ELSE,elsecmp))
+| e=expr b=block t=option(preceded(ELSE,elsecmp))
 	{e,b,t}
 ;
 
 elsecmp:
-| b = bloc
-	{Cbloc b}
+| b = block
+	{Cblock b}
 | IF i = ifcmp
 	{Cif i}
 ;
@@ -172,17 +184,17 @@ elsecmp:
 | STAR  { Bmul }
 | DIV   { Bdiv }
 | MOD   { Bmod }
-| c=CMP { c    }
-| BLT	{ Blt  }
-| BGT	{ Bgt  }
+| c=CMP { c }
+| BLT		{ Blt }
+| BGT		{ Bgt }
 | AND   { Band }
-| OR    { Bor  }
+| OR    { Bor }
 | EQUAL { Baff }
 ;
 
 %inline unary:
 | NOT  		 {Unot}
-| BORR MUT   {Umut}
+| BORR MUT {Umut}
 | BORR		 {Uborr}
 ;
 
