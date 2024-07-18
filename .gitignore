@@ -9,3 +9,4 @@ parser.automaton
 parser.conflicts
 mini_rustc
 .depend
+**/*.s

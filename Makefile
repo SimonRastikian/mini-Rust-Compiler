@@ -5,7 +5,6 @@ FLAGS=-annot -g
 
 
 mini_rustc: $(CMO)
-	# ocamlc $(FLAGS) -o $@ nums.cma $(CMO)
 	ocamlc $(FLAGS) -o $@ $(CMO)
 
 .SUFFIXES: .mli .ml .cmi .cmo .mll .mly
@@ -28,8 +27,9 @@ mini_rustc: $(CMO)
 clean:
 	rm -f *.cm[io] *.o *.annot $(GENERATED)
 	rm -f parser.output parser.automaton parser.conflicts
-	rm -f .depend
+	rm -f .depend a.out
 	rm -f lexer.ml parser.ml mini_rustc
+	rm -rf *.s
 
 parser.ml: ast.cmi
 
