@@ -25,6 +25,7 @@ type texpr = {
 }
 
 and texpression =
+   | Enone
    | Ecst of Ast.constant
    | Eident of Ast.ident
    | Ebinop of Ast.binop * texpr * texpr
@@ -36,8 +37,6 @@ and texpression =
    | Evect of vector
    | Eprint of string
    | Ebloc of tbloc
-   
-   | Enone
    | Eletv of bool * Ast.ident * texpr
    | Elets of bool * Ast.ident * Ast.ident * texpr Decls.t
    | Ewhile of texpr * tbloc

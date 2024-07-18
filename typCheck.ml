@@ -12,7 +12,6 @@ let typ_error (b, e) str =
    let () = assert (b.pos_fname = e.pos_fname) in
    let () = assert (b.pos_cnum <= e.pos_cnum) in
    let line = string_of_int b.pos_lnum in
-   let file = b.pos_fname in
    let scharac = b.pos_cnum - b.pos_bol in
    let echarac = e.pos_cnum - e.pos_bol in
    raise (Typing_error (
