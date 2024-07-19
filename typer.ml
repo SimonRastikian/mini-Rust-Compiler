@@ -1,7 +1,12 @@
 open Att
+(*
+The idea if this file is to construct an environment that contains
+all the types of the file. The typer consumes an ast_file and
+transforms it into type structures that will be put in the environment.
+*)
+
 
 (* Auxiliary functions begin *)
-
 let convert_idtyp env i =
    (* if i exists in the memory map*)
    if Decls.mem i env.env_structs then Tstruct i
@@ -16,7 +21,7 @@ let rec convert_ast_typ env (ast_typ:Ast.typ) =
    | Ast.Tident i ->
       convert_idtyp env i
    | Ast.Tidtyp (i, ast_typ) ->
-      let () = TypCheck.vect_decl env ast_typ.Ast.localisation i in
+      TypCheck.vect_decl env ast_typ.Ast.localisation i;
       Tvect (convert_ast_typ env ast_typ)
    | Ast.Tref ast_typ ->
          Tborr { borr_mut = false ; borr_typ = convert_ast_typ env ast_typ }
@@ -27,7 +32,7 @@ let check_desopt_typ env struct_loc opt_typ =
    match opt_typ with
    | None     -> struct_loc, Tunit
    | Some ast_typ ->
-         let () = TypCheck.typ_decl env false "" false ast_typ in
+         TypCheck.typ_decl env false "" false ast_typ;
          ast_typ.Ast.localisation, convert_ast_typ env ast_typ
 
 let deref te =
@@ -58,39 +63,40 @@ let purify env il =
 let type_unop env localisation unop te =
    match unop with
    | Ast.Uneg ->
-         let () = TypCheck.typ te.te_localisation Ti32 te.te_typ in
-         { te_expr   = Eunop (unop, te) ;
-           te_typ          = Ti32 ;
-           te_lval         = false ;
-           te_mut          = false ;
-           te_localisation = localisation ;
-         }
+      (* check if type of expression is Ti32 *)
+      TypCheck.typ te.te_localisation Ti32 te.te_typ;
+      { te_expr   = Eunop (unop, te) ;
+         te_typ          = Ti32 ;
+         te_lval         = false ;
+         te_mut          = false ;
+         te_localisation = localisation ;
+      }
    | Ast.Unot ->
-         let () = TypCheck.typ te.te_localisation Tbool te.te_typ in
-         { te_expr   = Eunop (unop, te) ;
-           te_typ          = Tbool ;
-           te_lval         = false ;
-           te_mut          = false ;
-           te_localisation = localisation ;
-         }
+      (* check if type of expression is Tbool *)
+      TypCheck.typ te.te_localisation Tbool te.te_typ;
+      { te_expr   = Eunop (unop, te) ;
+         te_typ          = Tbool ;
+         te_lval         = false ;
+         te_mut          = false ;
+         te_localisation = localisation ;
+      }
    | Ast.Uderef ->
-         let () =
-            TypCheck.typ te.te_localisation (new_beta ()) te.te_typ
-         in
-         let t, m =
-            match te.te_typ with
-            | Tborr { borr_typ ; borr_mut }  -> borr_typ, borr_mut
-            | _                              -> assert false
-         in
-         { te_expr   = Eunop (unop, te) ;
-           te_typ          = t ;
-           te_lval         = true ;
-           te_mut          = m ;
-           te_localisation = localisation ;
-         }
+      (* check if type of expression is Tbool *)
+      TypCheck.typ te.te_localisation (new_beta ()) te.te_typ;
+      let t, m =
+         match te.te_typ with
+         | Tborr { borr_typ ; borr_mut }  -> borr_typ, borr_mut
+         | _                              -> assert false
+      in
+      { te_expr   = Eunop (unop, te) ;
+         te_typ          = t ;
+         te_lval         = true ;
+         te_mut          = m ;
+         te_localisation = localisation ;
+      }
    | Ast.Umut ->
-         let () = TypCheck.lval te.te_localisation te.te_lval in
-         let () = TypCheck.mut te.te_localisation te.te_mut in
+         TypCheck.lval te.te_localisation te.te_lval;
+         TypCheck.mut te.te_localisation te.te_mut;
          { te_expr   = Eunop (unop, te) ;
            te_typ = Tborr { borr_mut = true ; borr_typ = te.te_typ } ;
            te_lval = false ;
@@ -98,7 +104,7 @@ let type_unop env localisation unop te =
            te_localisation = localisation ;
          }
    | Ast.Uborr ->
-         let () = TypCheck.lval te.te_localisation te.te_lval in
+         TypCheck.lval te.te_localisation te.te_lval;
          { te_expr   = Eunop (unop, te) ;
            te_typ = Tborr { borr_mut = false ; borr_typ = te.te_typ } ;
            te_lval = false ;
@@ -112,8 +118,8 @@ let type_unop env localisation unop te =
 let type_binop env localisation binop te1 te2 =
    match binop with
    | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
-         let () = TypCheck.typ te1.te_localisation Ti32 te1.te_typ in
-         let () = TypCheck.typ te2.te_localisation Ti32 te2.te_typ in
+         TypCheck.typ te1.te_localisation Ti32 te1.te_typ;
+         TypCheck.typ te2.te_localisation Ti32 te2.te_typ;
          { te_expr   = Ebinop (binop, te1, te2) ;
            te_typ          = Ti32 ;
            te_lval         = false ;
@@ -121,8 +127,8 @@ let type_binop env localisation binop te1 te2 =
            te_localisation = localisation ;
          }
    | Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge ->
-         let () = TypCheck.typ te1.te_localisation Ti32 te1.te_typ in
-         let () = TypCheck.typ te2.te_localisation Ti32 te2.te_typ in
+         TypCheck.typ te1.te_localisation Ti32 te1.te_typ;
+         TypCheck.typ te2.te_localisation Ti32 te2.te_typ;
          { te_expr   = Ebinop (binop, te1, te2) ;
            te_typ          = Tbool ;
            te_lval         = false ;
@@ -130,8 +136,8 @@ let type_binop env localisation binop te1 te2 =
            te_localisation = localisation ;
          }
    | Ast.Band | Ast.Bor ->
-         let () = TypCheck.typ te1.te_localisation Tbool te1.te_typ in
-         let () = TypCheck.typ te2.te_localisation Tbool te2.te_typ in
+         TypCheck.typ te1.te_localisation Tbool te1.te_typ;
+         TypCheck.typ te2.te_localisation Tbool te2.te_typ;
          { te_expr   = Ebinop (binop, te1, te2) ;
            te_typ          = Tbool ;
            te_lval         = false ;
@@ -139,9 +145,9 @@ let type_binop env localisation binop te1 te2 =
            te_localisation = localisation ;
          }
    | Ast.Baff ->
-         let () = TypCheck.typ te2.te_localisation te1.te_typ te2.te_typ in
-         let () = TypCheck.lval te1.te_localisation te1.te_lval in
-         let () = TypCheck.mut te1.te_localisation te1.te_mut in
+         TypCheck.typ te2.te_localisation te1.te_typ te2.te_typ;
+         TypCheck.lval te1.te_localisation te1.te_lval;
+         TypCheck.mut te1.te_localisation te1.te_mut;
          { te_expr   = Ebinop (binop, te1, te2) ;
            te_typ          = Tunit ;
            te_lval         = false ;
@@ -188,7 +194,7 @@ let rec type_stmt env stmt =
          let te_always_returnl = List.map (type_expr env) el in
          let tel = List.map fst te_always_returnl in
          let decll = List.map2 (fun x y -> (x, y)) il tel in
-         let () = TypCheck.get_s env zero_loc si decll in
+         TypCheck.get_s env zero_loc si decll;
 
          let var_decl = { vdecl_mut = m ; vdecl_typ = Tstruct si ; } in
          let struct_inst =
@@ -214,8 +220,8 @@ let rec type_stmt env stmt =
    | Ast.Swhile (e, block) ->
          let te, always_return = type_expr env e in
          let tblock, t, _ = type_block env block in
-         let () = TypCheck.typ te.te_localisation Tbool te.te_typ in
-         let () = TypCheck.typ te.te_localisation Tunit t in
+         TypCheck.typ te.te_localisation Tbool te.te_typ;
+         TypCheck.typ te.te_localisation Tunit t;
          (
             { te_expr   = Ewhile (te, tblock) ;
               te_typ          = t ;
@@ -227,7 +233,7 @@ let rec type_stmt env stmt =
             false
          )
    | Ast.Sret None ->
-         let () = TypCheck.typ zero_loc env.env_rty Tunit in
+         TypCheck.typ zero_loc env.env_rty Tunit;
          (
             { te_expr   = Eret { te_expr     = Enone ;
                                        te_typ            = Tunit ;
@@ -245,7 +251,7 @@ let rec type_stmt env stmt =
          )
    | Ast.Sret Some e ->
          let te, _ = type_expr env e in
-         let () = TypCheck.typ te.te_localisation env.env_rty te.te_typ in
+         TypCheck.typ te.te_localisation env.env_rty te.te_typ;
          (
             { te_expr   = Eret te ;
               te_typ          = Ret ;
@@ -271,8 +277,8 @@ let rec type_stmt env stmt =
               else_block = else_tblock ;
             }
          in
-         let () = TypCheck.typ te.te_localisation Tbool te.te_typ in
-         let () = TypCheck.typ zero_loc then_typ else_typ in
+         TypCheck.typ te.te_localisation Tbool te.te_typ;
+         TypCheck.typ zero_loc then_typ else_typ;
          (
             { te_expr   = Eif tifcomp ;
               te_typ          = then_typ ;
@@ -351,9 +357,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
    | Ast.Estruct (e, i)       ->
          let te, always_return = type_expr env e in
          let derefte = deref te in
-         let () =
-            TypCheck.typ te.te_localisation (Tstruct sigma) derefte.te_typ
-         in
+         TypCheck.typ te.te_localisation (Tstruct sigma) derefte.te_typ;
          let si =
             match derefte.te_typ with
             | Tstruct i -> i
@@ -373,7 +377,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
          let te, always_return = type_expr env e in
          let derefte = deref te in
          let vtyp = Tvect (Alpha (new_alpha ())) in
-         let () = TypCheck.typ localisation vtyp derefte.te_typ in
+         TypCheck.typ localisation vtyp derefte.te_typ;
          (
          { te_expr         = Elen derefte ;
            te_typ          = Ti32 ;
@@ -387,12 +391,10 @@ and type_expr env { Ast.expression; Ast.localisation } =
          let te1, always_return1 = type_expr env e1 in
          let derefte1 = deref te1 in
          let te2,always_return2 = type_expr env e2 in
-         let () = TypCheck.typ te2.te_localisation Ti32 te2.te_typ in
-         let () = TypCheck.typ
-            derefte1.te_localisation
-            (Tvect (Alpha (new_alpha ())))
-            derefte1.te_typ
-         in
+         TypCheck.typ te2.te_localisation Ti32 te2.te_typ;
+         TypCheck.typ derefte1.te_localisation
+                     (Tvect (Alpha (new_alpha ())))
+                     derefte1.te_typ;
          let t =
             match derefte1.te_typ with
             | Tvect t -> t
@@ -472,20 +474,14 @@ and type_expr env { Ast.expression; Ast.localisation } =
          )
 
 let type_struct env ast_decl_struct =
-   let () =
-      if Decls.mem ast_decl_struct.Ast.name env.env_structs then
-         TypCheck.typ_error ast_decl_struct.Ast.localisation
-            ("Struct " ^ ast_decl_struct.Ast.name ^ " declared twice")
-   in
+   if Decls.mem ast_decl_struct.Ast.name env.env_structs then
+      TypCheck.typ_error ast_decl_struct.Ast.localisation
+      ("Struct " ^ ast_decl_struct.Ast.name ^ " declared twice");
    let il = List.map fst ast_decl_struct.Ast.body in
-   let () = TypCheck.uniql ast_decl_struct.Ast.localisation il in
+   TypCheck.uniql ast_decl_struct.Ast.localisation il;
 
    let ast_typl = List.map snd ast_decl_struct.Ast.body in
-   let () =
-      List.iter
-      (TypCheck.typ_decl env false ast_decl_struct.Ast.name false)
-      ast_typl
-   in
+   List.iter (TypCheck.typ_decl env false ast_decl_struct.Ast.name false) ast_typl;
    let typl = List.map (convert_ast_typ env) ast_typl in
 
    let struct_decl =
@@ -503,20 +499,18 @@ let type_struct env ast_decl_struct =
    )
 
 let type_fun env (ast_decl_fun: Ast.decl_fun) =
-   let () =
-      if Decls.mem ast_decl_fun.Ast.name env.env_funs then
-         TypCheck.typ_error ast_decl_fun.Ast.localisation
-            ("Fun " ^ ast_decl_fun.Ast.name ^ " declared twice")
-   in
+   if Decls.mem ast_decl_fun.Ast.name env.env_funs then
+      TypCheck.typ_error ast_decl_fun.Ast.localisation
+      ("Fun " ^ ast_decl_fun.Ast.name ^ " declared twice");
 
    let argl = fst ast_decl_fun.Ast.formals in
    let formall = List.map fst argl in
 
    let il = List.map snd formall in
-   let () = TypCheck.uniql ast_decl_fun.Ast.localisation il in
+   TypCheck.uniql ast_decl_fun.Ast.localisation il;
 
    let ast_typl = List.map snd argl in
-   let () = List.iter (TypCheck.typ_decl env true "" true) ast_typl in
+   List.iter (TypCheck.typ_decl env true "" true) ast_typl;
    let typl = List.map (convert_ast_typ env) ast_typl in
    let mutl = List.map fst formall in
 
@@ -537,10 +531,8 @@ let type_fun env (ast_decl_fun: Ast.decl_fun) =
       }
    in
    let var_decls = List.fold_right2 Decls.add il var_decll env.env_vars in
-   let () =
-      if ast_decl_fun.Ast.name = "main" then
-         TypCheck.main fun_decl ast_decl_fun.Ast.localisation
-   in
+   if ast_decl_fun.Ast.name = "main" then
+      TypCheck.main fun_decl ast_decl_fun.Ast.localisation;
 
    let new_env = { env with
                    env_funs =
@@ -556,10 +548,8 @@ let type_fun env (ast_decl_fun: Ast.decl_fun) =
    let tblock, actual_rty, always_return =
       type_block fun_env ast_decl_fun.Ast.body
    in
-   let () =
-      if not (always_return && snd ast_decl_fun.Ast.body = None) then
-         TypCheck.typ zero_loc rty actual_rty
-   in
+   if not (always_return && snd ast_decl_fun.Ast.body = None) then
+      TypCheck.typ zero_loc rty actual_rty;
 
    let fun_def = { decl = fun_decl ; args = il ; body = tblock } in
    new_env, fun_def
@@ -605,5 +595,5 @@ let type_file ast_f =
       env_rty = Tunit;
    } in
    let att_f = rec_deconstruct empty_env ast_f in
-   let () = TypCheck.file att_f in
+   TypCheck.file att_f;
    att_f

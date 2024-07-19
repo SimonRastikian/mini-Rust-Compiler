@@ -34,7 +34,7 @@ and expression =
   | Efun of ident * expr list         (* f(e1,e2) *)
   | Evect of expr list                (* vec![e1,e2] *)
   | Eprint of string                  (* print!() *)
-  | Eblock of block                     (* { statements * potential expressions } *)
+  | Eblock of block                   (* { statements * potential expressions } *)
   | Eparenthese of expr               (* (e1) *)
 
 and block = stmt list  * expr option         (* { stmt and expr(?) } *)

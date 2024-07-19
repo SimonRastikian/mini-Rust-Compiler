@@ -9,16 +9,23 @@ module IdSet = Set.Make(String)
 
 let typ_error (b, e) str =
    let open Lexing in
-   let () = assert (b.pos_fname = e.pos_fname) in
-   let () = assert (b.pos_cnum <= e.pos_cnum) in
+   assert (b.pos_fname = e.pos_fname);
+   assert (b.pos_cnum <= e.pos_cnum);
    let line = string_of_int b.pos_lnum in
    let scharac = b.pos_cnum - b.pos_bol in
    let echarac = e.pos_cnum - e.pos_bol in
-   raise (Typing_error (
+   raise (Typing_error(
       sprintf
       "line %s, characters %d-%d:\ntype error : %s.\n"
       line scharac echarac str
       ))
+
+let lval loc b =
+   if not b then typ_error loc "This variable is not a l-value"
+
+let mut loc b =
+   if not b then typ_error loc "This variable is not mutable"
+
 
 let string_of_typ = function
    | Tbool        -> "bool"
@@ -62,7 +69,7 @@ let rec typ_decl env borrow_ok current_si under_vect ast_typ =
             "Unkown structure identifier"
          )
    | Ast.Tidtyp (id, ast_typ)  ->
-         let () = vect_decl env ast_typ.Ast.localisation id in
+         vect_decl env ast_typ.Ast.localisation id;
          typ_decl env borrow_ok current_si true ast_typ
    | Ast.Tref ast_typ | Ast.Trefmut ast_typ     ->
          if borrow_ok then
@@ -107,7 +114,7 @@ let rec typ loc t1 t2 =
             | Some t' -> typ loc t t'
          end
    | Tborr borr1, Tborr borr2 ->
-         let () = typ loc borr1.borr_typ borr2.borr_typ in
+         typ loc borr1.borr_typ borr2.borr_typ;
          if (not borr2.borr_mut && borr1.borr_mut) then
             typ_error loc
             "This expression is not mutable as it is expected to be"
@@ -135,7 +142,7 @@ let get_f env loc fi tel =
    let rec check_args count var_decll tel =
       match var_decll, tel with
       | var_decl :: t1, te :: t2 ->
-            let () = typ te.te_localisation var_decl.vdecl_typ te.te_typ in
+            typ te.te_localisation var_decl.vdecl_typ te.te_typ;
             check_args (count + 1) t1 t2
       | [], []                   -> ()
       | [], h :: t               ->
@@ -155,7 +162,7 @@ let get_f env loc fi tel =
               count
             )
    in
-   let () = check_args 0 (List.map snd fun_decl.fdecl_args) tel in
+   check_args 0 (List.map snd fun_decl.fdecl_args) tel;
    fun_decl.fdecl_rty
 
 let get_s env loc si decll =
@@ -172,7 +179,7 @@ let get_s env loc si decll =
       match expectf, decll with
       | set, (id, te) :: t ->
             let expected_typ = get_field env loc si id in
-            let () = typ te.te_localisation expected_typ te.te_typ in
+            typ te.te_localisation expected_typ te.te_typ;
             check_fields (IdSet.remove id set) t
       | set, [] ->
             if not (IdSet.is_empty set) then
@@ -198,20 +205,14 @@ let file tfile =
 
 let arr_typ env arr =
    let len = Array.length arr in
-   let () = assert (len != 0) in
+   assert (len != 0);
    let t = ref (snd arr.(0)) in
    let update_typ loc_typ =
       try
-         let () = typ zero_loc (snd loc_typ) !t in
+         typ zero_loc (snd loc_typ) !t;
          t := (snd loc_typ)
       with Typing_error _ ->
          typ (fst loc_typ) !t (snd loc_typ)
    in
-   let () = Array.iter update_typ arr in
+   Array.iter update_typ arr;
    !t
-
-let lval loc b =
-   if not b then typ_error loc "This variable is not a l-value"
-
-let mut loc b =
-   if not b then typ_error loc "This variable is not mutable"
