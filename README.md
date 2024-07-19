@@ -25,10 +25,20 @@ For example to run all the test cases
 ./run-tests -all ./mini_rustc
 ```
 
-
-
-## Organisation
+## Organization
 Main calls the Lexer then the Parser on the file.
 If no errors were detected it calls the Typer and the BorrowChecker.
 It finally compiles producing an assembly code for X86-64 Assembly.
 The assembly can be executed on your machine.
+
+### On the Syntax Checking
+The Syntax checking is provided by the
+- lexer.mll: reads the code and transforms the corresponding characters into constructors
+- ast.mli: the abstract syntax tree that provides the necessary constuctors for Rust syntax
+- parser.mly: the parser that fixes the rules over which the parsing will succeed or fail
+
+
+### On the Type Checking
+- typer.ml: transforms the parser's ast constructor into the typer's att constructors
+- att.ml: the abstract type tree that provides the necessary constructors for Rust types
+- typCheck.ml: checks if the types are matching

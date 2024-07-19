@@ -1,20 +1,21 @@
 type loc = Lexing.position * Lexing.position
 module Decls = Map.Make(String)
 
-type borrow = {
+
+type typ =
+   | Tunit                                (* () *)
+   | Ti32                                 (* i32 *)
+   | Tbool                                (* bool *)
+   | Tstruct of Ast.ident                 (* struct S *)
+   | Tvect of typ                         (* Vec<type> *)
+   | Tborr of borrow                      (* &m type *)
+   | Alpha of ((typ option) ref) ref
+   | Ret                                  (* return type of the current verified function*)
+
+and borrow = { (* &mut type or &type *)
    borr_mut : bool;
    borr_typ : typ;
 }
-
-and typ =
-   | Tunit
-   | Ti32
-   | Tbool
-   | Tstruct of Ast.ident
-   | Tvect of typ
-   | Tborr of borrow
-   | Alpha of ((typ option) ref) ref
-   | Ret
 
 type texpr = {
    te_expr : texpression;
@@ -89,13 +90,6 @@ type tfile = {
    file_funs : fun_defs;
    struct_order : Ast.ident list;
    fun_order :  Ast.ident list;
-}
-
-let empty_env = {
-   env_vars = Decls.empty;
-   env_structs = Decls.empty;
-   env_funs = Decls.empty;
-   env_rty = Tunit;
 }
 
 let new_alpha () = ref (ref None)
