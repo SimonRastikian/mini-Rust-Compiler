@@ -10,7 +10,7 @@ type typ =
    | Tvect of typ                         (* Vec<type> *)
    | Tborr of borrow                      (* &m type *)
    | Ret                                  (* return type of the current verified function*)
-   | Alpha of ((typ option) ref) ref      (* pointer to pointer any of the previous types *)
+   | Alpha of ((typ option) ref) ref      (* reference to reference any of the previous types or None*)
 
 and borrow = { (* &mut type or &type *)
    borr_mut : bool;
@@ -92,9 +92,6 @@ type tfile = {
    fun_order :  Ast.ident list;
 }
 
-let new_alpha () = ref (ref None)
-let new_beta () = Tborr { borr_mut = false ; borr_typ = Alpha (new_alpha ()) }
-let sigma = ""
 let zero_pos =
    { Lexing.pos_fname = "fily mac fileface" ;
      Lexing.pos_lnum = 0 ;

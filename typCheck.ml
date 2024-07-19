@@ -27,6 +27,7 @@ let mut loc b =
    if not b then typ_error loc "This variable is not mutable"
 
 
+(* Used for transforming a type into a string for error messages *)
 let string_of_typ = function
    | Tbool        -> "bool"
    | Ti32         -> "int32"
@@ -87,49 +88,41 @@ let rec uniq loc set = function
 
 let uniql loc l = uniq loc IdSet.empty l
 
-(* Actual checking function i.e. part of the interface *)
-
+(*
+typ function checks whether t1 and t2 have corresponding types
+*)
 let rec typ loc t1 t2 =
    match t1, t2 with
-   | _, Ret                   -> ()
-   | Ret, _                   -> assert false
-   | Alpha r1, Alpha r2       ->
-         begin
-            match !(!r1), !(!r2) with
-            | None, None         -> r1 := !r2
-            | Some t, None
-            | None, Some t       -> !r1 := Some t
-            | Some t1, Some t2   -> typ loc t1 t2
-         end
-   | Alpha r, t               ->
-         begin
-            match !(!r) with
-            | None   -> !r := Some t
-            | Some t' -> typ loc t' t
-         end
-   | t, Alpha r               ->
-         begin
-            match !(!r) with
-            | None   -> !r := Some t
-            | Some t' -> typ loc t t'
-         end
+   | _, Ret -> ()
+   | Ret, _ -> assert false
+   | Alpha r1, Alpha r2 -> (* alpha is a double reference to a type*)
+      (match !(!r1), !(!r2) with
+      | None, None -> r1 := !r2
+      | Some t, None | None, Some t -> !r1 := Some t
+      | Some t1, Some t2 -> typ loc t1 t2)
+   | Alpha r, t ->
+      (match !(!r) with
+      | None -> !r := Some t
+      | Some t' -> typ loc t' t)
+   | t, Alpha r ->
+      (match !(!r) with
+      | None -> !r := Some t
+      | Some t' -> typ loc t t')
    | Tborr borr1, Tborr borr2 ->
-         typ loc borr1.borr_typ borr2.borr_typ;
-         if (not borr2.borr_mut && borr1.borr_mut) then
-            typ_error loc
-            "This expression is not mutable as it is expected to be"
-   | Tvect t1, Tvect t2       -> typ loc t1 t2
+      typ loc borr1.borr_typ borr2.borr_typ;
+      if (not borr2.borr_mut && borr1.borr_mut) then
+         typ_error loc
+         "This expression is not mutable as it is expected to be"
+   | Tvect t1, Tvect t2 -> typ loc t1 t2
    | Tstruct "", Tstruct i | Tstruct i, Tstruct "" -> ()
-   | t1, t2                   ->
-         if not (t1 = t2) then
-            typ_error loc
-            ( sprintf
-              ( "This expression has type %s " ^^
-                "but an expression was expected of type %s")
-              (string_of_typ t2)
-              (string_of_typ t1)
-            )
-
+   | t1, t2 ->
+      if not (t1 = t2) then
+         typ_error loc
+            (sprintf
+            ( "This expression has type %s " ^^
+               "but an expression was expected of type %s")
+            (string_of_typ t2)
+            (string_of_typ t1))
 let get_var env loc i =
    get_thing env.env_vars loc i "Unkown variable identifier"
 

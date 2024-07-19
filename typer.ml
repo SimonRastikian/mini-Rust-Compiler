@@ -81,8 +81,13 @@ let type_unop env localisation unop te =
          te_localisation = localisation ;
       }
    | Ast.Uderef ->
-      (* check if type of expression is Tbool *)
-      TypCheck.typ te.te_localisation (new_beta ()) te.te_typ;
+      let new_borr = Tborr{
+                     borr_mut = false;
+                     borr_typ = Alpha (ref (ref None))
+                     } in
+
+      (* check if type of expression is Tborr *)
+      TypCheck.typ te.te_localisation new_borr te.te_typ;
       let t, m =
          match te.te_typ with
          | Tborr { borr_typ ; borr_mut }  -> borr_typ, borr_mut
@@ -357,7 +362,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
    | Ast.Estruct (e, i)       ->
          let te, always_return = type_expr env e in
          let derefte = deref te in
-         TypCheck.typ te.te_localisation (Tstruct sigma) derefte.te_typ;
+         TypCheck.typ te.te_localisation (Tstruct "") derefte.te_typ;
          let si =
             match derefte.te_typ with
             | Tstruct i -> i
@@ -376,7 +381,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
    | Ast.Elen e               ->
          let te, always_return = type_expr env e in
          let derefte = deref te in
-         let vtyp = Tvect (Alpha (new_alpha ())) in
+         let vtyp = Tvect (Alpha (ref (ref None))) in
          TypCheck.typ localisation vtyp derefte.te_typ;
          (
          { te_expr         = Elen derefte ;
@@ -393,7 +398,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
          let te2,always_return2 = type_expr env e2 in
          TypCheck.typ te2.te_localisation Ti32 te2.te_typ;
          TypCheck.typ derefte1.te_localisation
-                     (Tvect (Alpha (new_alpha ())))
+                     (Tvect (Alpha (ref (ref None))))
                      derefte1.te_typ;
          let t =
             match derefte1.te_typ with
@@ -427,7 +432,7 @@ and type_expr env { Ast.expression; Ast.localisation } =
    | Ast.Evect []             ->
          (
          { te_expr   = Evect { arr = [||] ; len = 0 } ;
-           te_typ          = Tvect (Alpha (new_alpha ())) ;
+           te_typ          = Tvect (Alpha (ref (ref None))) ;
            te_lval         = false;
            te_mut          = false;
            te_localisation = localisation ;
