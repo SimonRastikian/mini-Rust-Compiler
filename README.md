@@ -42,3 +42,4 @@ The Syntax checking is provided by the
 - typer.ml: transforms the parser's ast constructor into the typer's att constructors
 - att.ml: the abstract type tree that provides the necessary constructors for Rust types
 - typCheck.ml: checks if the types are matching
+

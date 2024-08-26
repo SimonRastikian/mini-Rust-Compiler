@@ -47,14 +47,14 @@ let () =
   with
     | Lexer.Lexing_error s ->
 	report (lexeme_start_p lb, lexeme_end_p lb);
-	eprintf "lexical error: %s@." s;
+	eprintf "Lexical Error: %s@." s;
 	exit 1
     | Parser.Error ->
 	report (lexeme_start_p lb, lexeme_end_p lb);
-	eprintf "syntax error@.";
+	eprintf "Syntax Error.@.";
 	exit 1
     | TypCheck.Typing_error s ->
-	eprintf "File \"%s\", %s@." filename s;
+	eprintf "Type Error: %s@." s;
 	exit 1
     | e ->
 	eprintf "Anomaly: %s\n@." (Printexc.to_string e);

@@ -42,7 +42,7 @@ rule token = parse
 	| "print"	{PRINT}		(* print!("str") *)
 	| integer as i 			(* from string to integer *)
 		{ try CST (Cint(int_of_string i))
-		  with _ -> raise (Lexing_error("constant too large"^i)) }
+		  with _ -> raise (Lexing_error("Constant too large"^i)) }
 	| ident as id { id_or_kwd id }				(* creer variable *)
 	| "&&"		{AND}
 	| "||"		{OR}
@@ -73,12 +73,11 @@ rule token = parse
 	| ';'		{SEMICOLON}
 	| '\n' {new_line lexbuf; token lexbuf}	(* retour chariot *)
 	| '"' 		{STRING(find_string lexbuf)} (* this function allows *)
-
 	| (space|cmnt)+ {token lexbuf}		(* ignorer espace + commentaire *)
 	| "/*" {comment lexbuf; token lexbuf}	(* commentaires imbriques *)
 	| cmnt eof 								(* commentaire fin fichier *)
 	| eof { EOF }							(* end of file *)
-	|_ as c {raise (Lexing_error ("illegal character " ^ String.make 1 c))}
+	|_ as c {raise (Lexing_error ("Illegal character " ^ String.make 1 c))}
 
 
 
@@ -86,9 +85,9 @@ rule token = parse
 and comment = parse
 	| "*/" { () }
 	| "/*" { comment lexbuf; comment lexbuf }
-	| '\n' {new_line lexbuf; comment lexbuf}
+	| '\n' { new_line lexbuf; comment lexbuf }
 	| _ { comment lexbuf }
-	| eof { raise (Lexing_error ("unterminated comment")) }
+	| eof { raise (Lexing_error ("Unterminated comment")) }
 
 
 (* strings in print! function*)
@@ -108,4 +107,4 @@ and find_string = parse
 				then raise (Lexing_error("non utf-8 character " ^ String.make 1 c)); *)
 				Buffer.add_char string_buffer c;
 			  find_string lexbuf}
-	| eof { raise(Lexing_error ("unterminated string")) }
+	| eof { raise(Lexing_error ("Unterminated string")) }

@@ -67,9 +67,11 @@ done
 
 compile () {
 if [[ $verbose != 0 ]]; then
+  echo;
   echo Compile $1 $2
   $compilo $1 $2;
 else
+  echo -n "*";
   $compilo $1 $2 > /dev/null 2>&1;
 fi;
 }
@@ -82,12 +84,9 @@ partie1 () {
 score=0
 max=0
 
-echo "Partie 1"
-
 # les mauvais
-echo -n "mauvais "
+echo -n "Partie 1: mauvais: "
 for f in tests/syntax/bad/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --parse-only $f;
     case $? in
@@ -103,9 +102,8 @@ done
 echo
 
 # les bons
-echo -n "bons "
+echo -n "Partie 1: bons: "
 for f in tests/syntax/good/*.rs tests/typing/bad/*.rs tests/typing/good/*.rs tests/typing2/bad/*.rs tests/typing2/good/*.rs tests/exec/*.rs tests/exec-fail/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --parse-only $f;
     case $? in
@@ -129,15 +127,12 @@ echo -n "Syntaxe : $score/$max : $percent%"; }
 
 partie2 () {
 echo
-echo "Partie 2"
-
 score=0
 max=0
 
 # les mauvais
-echo -n "mauvais "
+echo -n "Partie 2: mauvais: "
 for f in tests/typing/bad/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --type-only $f;
     case $? in
@@ -153,9 +148,8 @@ done
 echo
 
 # les bons
-echo -n "bons "
+echo -n "Partie 2: bons: "
 for f in tests/typing/good/*.rs tests/typing2/bad/*.rs tests/typing2/good/*.rs tests/exec/*.rs tests/exec-fail/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --type-only $f;
     case $? in
@@ -177,15 +171,13 @@ echo    "Typage  : $score/$max : $percent%";
 
 partie2b () {
 echo
-echo "Partie 2b"
 
 score=0
 max=0
 
 # les mauvais
-echo -n "mauvais "
+echo -n "Partie 2b: mauvais: "
 for f in tests/typing2/bad/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --no-asm $f;
     case $? in
@@ -201,9 +193,8 @@ done
 echo
 
 # les bons
-echo -n "bons "
+echo -n "Partie 2b: bons: "
 for f in tests/typing2/good/*.rs tests/exec/*.rs tests/exec-fail/*.rs; do
-    echo -n ".";
     max=`expr $max + 1`;
     compile --no-asm $f;
     case $? in
@@ -242,7 +233,7 @@ echo "-----------------"
 timeout=""
 
 for f in tests/exec/*.rs; do
-    echo -n "."
+    echo -n "*"
     asm=tests/exec/`basename $f .rs`.s
     rm -f $asm
     expected=tests/exec/`basename $f .rs`.out
@@ -273,7 +264,7 @@ echo "Execution conduisant à un échec"
 echo "-------------------------------"
 
 for f in tests/exec-fail/*.rs; do
-    echo -n "."
+    echo -n "*"
     asm=tests/exec-fail/`basename $f .rs`.s
     rm -f $asm
     max=`expr $max + 1`;

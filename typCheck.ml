@@ -46,10 +46,10 @@ let get_thing decls loc i str =
    with Not_found -> typ_error loc (sprintf "%s %s" str i)
 
 let get_struct_decl env loc si =
-   get_thing env.env_structs loc si "Unkown structure identifier"
+   get_thing env.env_structs loc si "Undefined structure identifier"
 
 let get_fun_decl env loc fi =
-   get_thing env.env_funs loc fi "Unkown function identifier"
+   get_thing env.env_funs loc fi "Undefined function identifier"
 
 let rec typ_decl env borrow_ok current_si under_vect ast_typ =
    match ast_typ.Ast.my_type with
@@ -67,7 +67,7 @@ let rec typ_decl env borrow_ok current_si under_vect ast_typ =
             env.env_structs
             ast_typ.Ast.localisation
             id
-            "Unkown structure identifier"
+            "Undefined structure identifier"
          )
    | Ast.Tidtyp (id, ast_typ)  ->
          vect_decl env ast_typ.Ast.localisation id;
@@ -124,11 +124,11 @@ let rec typ loc t1 t2 =
             (string_of_typ t2)
             (string_of_typ t1))
 let get_var env loc i =
-   get_thing env.env_vars loc i "Unkown variable identifier"
+   get_thing env.env_vars loc i "Undefined variable identifier"
 
 let get_field env loc si i =
    let struct_decl = get_struct_decl env loc si in
-   get_thing struct_decl loc i "Unkown structure field"
+   get_thing struct_decl loc i "Undefined structure field"
 
 let get_f env loc fi tel =
    let fun_decl = get_fun_decl env loc fi in
