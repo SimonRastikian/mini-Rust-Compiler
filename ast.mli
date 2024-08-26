@@ -85,5 +85,5 @@ type decl =
   | Dfun of decl_fun          (* function *)
   | Dstruct of decl_struct    (* structure *)
 
-type file = decl list
+type sfile = decl list
 

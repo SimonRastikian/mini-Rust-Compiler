@@ -1,6 +1,5 @@
 
 (* Programme principal *)
-
 open Format
 open Lexing
 
@@ -15,48 +14,61 @@ let options =
     "--type-only", Arg.Set type_only, " simple typing";
     "--no-asm", Arg.Set no_asm, " stop before code production"]
 
-let file =
-  let file = ref None in
+(* Load the file *)
+let load_file =
+  let f = ref None in
   let set_file s =
     if not (Filename.check_suffix s ".rs") then
       raise (Arg.Bad "no .rs extension");
-    file := Some s
+      f := Some s
   in
   Arg.parse options set_file usage;
-  match !file with Some f -> f | None -> Arg.usage options usage; exit 1
+  match !f with
+  | Some f -> f
+  | None -> Arg.usage options usage;
+            exit 1
 
-let report (b,e) =
-  let l = b.pos_lnum in
-  let fc = b.pos_cnum - b.pos_bol + 1 in
-  let lc = e.pos_cnum - b.pos_bol + 1 in
-  eprintf "File \"%s\", line %d, characters %d-%d:\n" file l fc lc
+(* Print the line and characters numbers of the error *)
+let print_error_position filename start_p end_p =
+  let line = start_p.pos_lnum in
+  let cs = start_p.pos_cnum - start_p.pos_bol + 1 in
+  let ce = end_p.pos_cnum - start_p.pos_bol + 1 in
+  eprintf "File \"%s\", line %d, characters %d-%d:\n" filename line cs ce
 
 let () =
-  let filename = file in
-  let c = open_in filename in
-  let lb = Lexing.from_channel c in
+  let filename = load_file in
+  (* create a reading channel *)
+  let channel = open_in filename in
+  let lexbuf = Lexing.from_channel channel in
   try
-    let p = Parser.file Lexer.token lb in
-    close_in c;
+    (* start parsing at the lexing buffer *)
+    let parsed = Parser.parse_file Lexer.token lexbuf in
+    close_in channel;
     if !parse_only then exit 0;
-    let tf = Typer.type_file p in
+    (* start typing the parsed file *)
+    let typed = Typer.type_file parsed in
     if !type_only then exit 0;
     if !no_asm then exit 0;
+    (* start compiling the typed file *)
     let out_name = (Filename.chop_suffix filename ".rs") ^ ".s" in
-    Compile.compile_program tf out_name
+    Compile.compile_file typed out_name
   with
-    | Lexer.Lexing_error s ->
-	report (lexeme_start_p lb, lexeme_end_p lb);
-	eprintf "Lexical Error: %s@." s;
+  | Lexer.Lexing_error str ->
+  (* catch the lexing problem *)
+	eprintf "Syntax Error: %s@." str;
+	print_error_position filename (lexeme_start_p lexbuf)  (lexeme_end_p lexbuf);
 	exit 1
-    | Parser.Error ->
-	report (lexeme_start_p lb, lexeme_end_p lb);
-	eprintf "Syntax Error.@.";
+  | Parser.Error ->
+  (* cannot catch the exact parsing problem *)
+	eprintf "Syntax Error. @.";
+	print_error_position filename (lexeme_start_p lexbuf) (lexeme_end_p lexbuf);
 	exit 1
-    | TypCheck.Typing_error s ->
-	eprintf "Type Error: %s@." s;
+  | TypCheck.Typing_error str ->
+  (* catch the typing problem *)
+	eprintf "Type Error: %s@." str;
 	exit 1
-    | e ->
+  | e ->
+  (* some random anomaly detected *)
 	eprintf "Anomaly: %s\n@." (Printexc.to_string e);
 	exit 2
 

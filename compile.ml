@@ -550,7 +550,7 @@ and	compile_if (e,b,els)=
  pour les anciens if else   *)
 
 
-let compile_program prog filename =
+let compile_file prog filename =
 	(* plein d'instructions *)
 	let _ =
 		List.iter

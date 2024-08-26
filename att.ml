@@ -93,7 +93,7 @@ type tfile = {
 }
 
 let zero_pos =
-   { Lexing.pos_fname = "fily mac fileface" ;
+   { Lexing.pos_fname = "No name" ;
      Lexing.pos_lnum = 0 ;
      Lexing.pos_bol = 0 ;
      Lexing.pos_cnum = 0 ;

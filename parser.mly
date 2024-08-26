@@ -26,12 +26,12 @@
 
 
 /* Start the parser at the file constructor */
-%start file
-%type <Ast.file> file
+%start parse_file
+%type <Ast.sfile> parse_file
 
 %%
 // a file is a list of declarations that ends with EOF
-file:
+parse_file:
 	d = list(decl) EOF
 	{d}
 ;

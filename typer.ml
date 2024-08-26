@@ -1,10 +1,9 @@
-open Att
 (*
-The idea if this file is to construct an environment that contains
-all the types of the file. The typer consumes an ast_file and
-transforms it into type structures that will be put in the environment.
+Construct an environment that contains all the types.
+The typer consumes an ast_file and transforms it into
+some type structures that will be added to the environment.
 *)
-
+open Att
 
 (* Auxiliary functions begin *)
 let convert_idtyp env i =
